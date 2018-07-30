@@ -9,27 +9,74 @@ import {
   TouchableHighlight
 } from 'react-native';
 
-export default class SearchComponent extends Component {
+import { getUserInfo } from '../services/FetchUser';
+import DashboardComponent from './DashboardComponent';
 
-  render() {
-    return (
-      <View style={styles.main}>
-        <Text style={styles.title}>Search For Github User</Text>
-        <TextInput
-              style={styles.searchInput}
-            />
-        <TouchableHighlight
-                style = {styles.button}
-                underlayColor= "white"
-              >
-              <Text
-                  style={styles.buttonText}>
-                  SEARCH
-              </Text>
-            </TouchableHighlight>
-      </View>
-    )
-  }
+export default class SearchComponent extends Component {
+  constructor(props) {
+      super(props);
+      this.state = {
+        username: '',
+        error: false
+      }
+      this.handleChange = this.handleChange.bind(this);
+      this.handleSubmit = this.handleSubmit.bind(this);
+    }
+    handleChange(e) {
+      this.setState({
+        username: e.nativeEvent.text
+      });
+    }
+    handleSubmit() {
+        getUserInfo(this.state.username)
+            .then((res) => {
+                if(res.message === 'Not Found') {
+                  this.setState({
+                      error: 'User not found'
+                  });
+                }
+              else {
+                this.props.navigator.push({
+                  title: res.name || 'No Title',
+                  passProps: {userInfo: res},
+                  component: DashboardComponent
+                });
+                this.setState({
+                  error: false,
+                  username: ''
+                })
+              }
+          });
+      }
+      render() {
+        let showErr = (
+          this.state.error ?
+          <Text>
+            {this.state.error}
+          </Text> :
+          <View></View>
+        );
+        return (
+          <View style={styles.main}>
+            <Text style={styles.title}>Search For Github User</Text>
+            <TextInput
+                  style={styles.searchInput}
+                  onChange={this.handleChange}
+                />
+            <TouchableHighlight
+                    style = {styles.button}
+                    underlayColor= "white"
+                    onPress = {this.handleSubmit}
+                  >
+                  <Text
+                      style={styles.buttonText}>
+                      SEARCH
+                  </Text>
+                </TouchableHighlight>
+                {showErr}
+          </View>
+        )
+      }
 }
 
 const styles = StyleSheet.create({
